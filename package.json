@@ -1,0 +1,23 @@
+{
+  "name": "AutoGeeniMotionDetection",
+  "version": "1.0.0",
+  "description": "- Both of these are required and can be downloaded [here](https://github.com/nodesource/distributions).\r     - If using a Raspberry Pi Zero W, follow [these](https://www.thepolyglotdeveloper.com/2018/03/install-nodejs-raspberry-pi-zero-w-nodesource/) instructions instead.\r ### Geeni\r - Geeni is connected to the Google Assistant.\r - The cameras are named the same as in `program.js`.\r     - This can be done through the Google Home app or the Geeni app.\r ### Google Assistant Server\r - [REST-GoogleAssistant]() must be set up and operational.\r     - Take note of the port that the server is listening on and make sure that the port is forwarded.\r ## Installation\r - Everything in the __Prerequisites__ section must be done first!\r - After cloning:\r     - Run `npm install` to install packages.\r     - Run `node program.js` to start.\r - Optionally, add the following line to `/etc/rc.local` for auto startup:\r     - `sudo node \"/PATH/TO/REPO/program.js\"`.",
+  "main": "program.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thomasnorris/AutoGeeniMotionDetection.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/thomasnorris/AutoGeeniMotionDetection/issues"
+  },
+  "homepage": "https://github.com/thomasnorris/AutoGeeniMotionDetection#readme",
+  "dependencies": {
+    "local-devices": "^3.0.0"
+  }
+}
