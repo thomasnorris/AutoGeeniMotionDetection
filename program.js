@@ -4,7 +4,11 @@
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
     // MACs should be cupper case
-    const MACS = ['CC:C0:79:F1:8F:47', 'CC:C0:79:83:5B:18'];
+    const MACS = [
+        'CC:C0:79:F1:8F:47',
+        'CC:C0:79:83:5B:18'
+    ];
+    // milliseconds
     const SCAN_INTERVALS = {
         HOME: '5000',
         AWAY: '2000'
@@ -13,6 +17,7 @@
     var _path = require('path');
     var _scan = require('local-devices');
 
+    // default = away
     var _scanIntervalMs = SCAN_INTERVALS.AWAY;
     var _away = true;
 

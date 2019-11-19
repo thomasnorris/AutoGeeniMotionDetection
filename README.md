@@ -7,8 +7,12 @@
 - The cameras are named the same as in `program.js`.
     - This can be done through the Google Home app or the Geeni app.
 ### Google Assistant Server
-- [REST-GoogleAssistant]() must be set up and operational.
-    - Take note of the port that the server is listening on and make sure that the port is forwarded.
+- [REST-GoogleAssistant](https://github.com/thomasnorris/REST-GoogleAssistant) must be set up and operational.
+    - Take note of:
+        - The port that the server is listening on.
+            - Make sure that the port is forwarded.
+        - The `auth.json` with the header key/value
+            - Both of these will be needed to authenticate.
 ## Installation
 - Everything in the __Prerequisites__ section must be done first!
 - After cloning:
