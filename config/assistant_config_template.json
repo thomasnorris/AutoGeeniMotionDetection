@@ -1,0 +1,8 @@
+{
+    "PORT": 1000,
+    "ADDRESS": "",
+    "AUTH": {
+        "KEY": "X-Auth",
+        "VALUE": ""
+    }
+}

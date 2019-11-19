@@ -1,4 +1,7 @@
 (function() {
+    var _path = require('path');
+    var _scan = require('local-devices');
+
     const CAM_1 = 'Doggo Cam';
     const CAM_2 = 'People (Ellie) Cam';
     const ENABLE_MD = 'Enable motion detection';
@@ -13,9 +16,10 @@
         HOME: '5000',
         AWAY: '2000'
     };
+    const CONFIG_FOLDER = 'config';
+    const CONFIG_FILE = 'assistant_config.json';
 
-    var _path = require('path');
-    var _scan = require('local-devices');
+    const SETTINGS = readJson(_path.resolve(__dirname, CONFIG_FOLDER, CONFIG_FILE));
 
     // default = away
     var _scanIntervalMs = SCAN_INTERVALS.AWAY;
@@ -52,5 +56,10 @@
 
     function sendCommand(command) {
 
+    }
+
+    function readJson(filePath) {
+        var fs = require('fs');
+        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
     }
 })();
