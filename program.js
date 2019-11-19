@@ -1,5 +1,6 @@
 (function() {
     var _path = require('path');
+    var _request = require('request');
     var _scan = require('local-devices');
 
     const CAM_1 = 'Doggo Cam';
@@ -19,7 +20,7 @@
     const CONFIG_FOLDER = 'config';
     const CONFIG_FILE = 'assistant_config.json';
 
-    const SETTINGS = readJson(_path.resolve(__dirname, CONFIG_FOLDER, CONFIG_FILE));
+    const CONFIG = readJson(_path.resolve(__dirname, CONFIG_FOLDER, CONFIG_FILE));
 
     // default = away
     var _scanIntervalMs = SCAN_INTERVALS.AWAY;
@@ -55,7 +56,21 @@
     })(true);
 
     function sendCommand(command) {
+        var reqOptions = {
+            url: buildUrl(command),
+            headers: {
+                [CONFIG.AUTH.KEY]: CONFIG.AUTH.VALUE
+            }
+        }
 
+        _request(reqOptions, (err, res, body) => {
+            // TODO: Logging or something
+            console.log('Response:', body);
+        });
+
+        function buildUrl(command) {
+            return CONFIG.ADDRESS + ':' + CONFIG.PORT + '/' + CONFIG.ENDPOINT + '/' + encodeURI(command);
+        }
     }
 
     function readJson(filePath) {

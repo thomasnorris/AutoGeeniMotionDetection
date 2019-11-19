@@ -1,6 +1,7 @@
 {
     "PORT": 1000,
-    "ADDRESS": "",
+    "ADDRESS": "http://",
+    "ENDPOINT": "no leading or trailing / here please",
     "AUTH": {
         "KEY": "X-Auth",
         "VALUE": ""
