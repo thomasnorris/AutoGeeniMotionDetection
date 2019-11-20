@@ -1,91 +1,68 @@
 (function() {
     var _path = require('path');
     var _request = require('request');
-    var _scan = require('local-devices');
+    var _ping = require('ping');
 
     const CAM_1 = 'Doggo Cam';
     const CAM_2 = 'People (Ellie) Cam';
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
-    // MACs can be uppercase, lowercase, - or : delimited
-    const MACS = [
-        'CC:C0:79:F1:8F:47',
-        'CC:C0:79:83:5B:18'
-    ];
-    // milliseconds
+
+    // IPs must be static
+    const IPS = [
+        '192.168.24.139'
+    ]
+
+    // todo: change to ping timeout
     const SCAN_INTERVALS = {
         HOME: '5000',
         AWAY: '2000'
     };
+
     const CONFIG_FOLDER = 'config';
     const CONFIG_FILE = 'assistant_config.json';
-
     const CONFIG = readJson(_path.resolve(__dirname, CONFIG_FOLDER, CONFIG_FILE));
 
     // default = away
     var _scanIntervalMs = SCAN_INTERVALS.AWAY;
     var _away = true;
 
-    (function startScanning(init = false) {
-        _scan().then((devices) => {
-            var match = devices.some((device) => {
-                return checkMatch(device);
+    (function run(init = false) {
+        var match;
+        IPS.forEach((ip) => {
+            _ping.sys.probe(ip, (alive) => {
+                match = alive;
+            }, {
+                timeout: 2
             });
+        });
 
-            console.log('Done scanning', devices.length, 'devices.' , match ? 'Found' : 'No', 'match!');
+        setTimeout(() => {
+            console.log('Match:', match);
+            console.log('Status:', _away ? 'Away' : 'Home');
             if (match && _away) {
                 // someone just came home
-                sendCommand('What time is it?');
+                sendCommand('What time is it?', (res) => {
+                    _scanIntervalMs = SCAN_INTERVALS.HOME;
+                    _away = false;
+                });
                 //sendCommand(DISABLE_MD + ' on ' + CAM_1);
                 //sendCommand(DISABLE_MD + ' on ' + CAM_2);
-                _scanIntervalMs = SCAN_INTERVALS.HOME;
-                _away = false;
             } else if (init || (!match && !_away)) {
                 // everyone just left
-                sendCommand('How is the weather today?');
+                sendCommand('How is the weather today?', (res) => {
+                    _scanIntervalMs = SCAN_INTERVALS.AWAY;
+                    _away = true;
+                });
                 //sendCommand(ENABLE_MD + ' on ' + CAM_1);
                 //sendCommand(ENABLE_MD + ' on ' + CAM_2);
-                _scanIntervalMs = SCAN_INTERVALS.AWAY;
-                _away = true;
             }
+            run();
+        }, _scanIntervalMs);
 
-            setTimeout(() => {
-                startScanning();
-            }, _scanIntervalMs);
-
-            function checkMatch(device) {
-                var mac = device.mac;
-                // check for combinations of upper/lowercase/- or : delimited addresses
-                return MACS.includes(mac.toUpperCase())
-                    || MACS.includes(mac.toLowerCase())
-                    || MACS.includes(mac.toUpperCase().split(':').join('-'))
-                    || MACS.includes(mac.toLowerCase().split(':').join('-'))
-                    || MACS.includes(mac.toUpperCase().split('-').join(':'))
-                    || MACS.includes(mac.toLowerCase().split('-').join(':'));
-            }
-        });
     })(true);
 
-    function scan(cb) {
-        // see https://nodejs.org/api/child_process.html#child_process_child_process
-        var { spawn } = require('child_process');
-        var arp = spawn('arp', ['-a']);
-
-        arp.stdout.on('data', (data) => {
-            // there must be at least 1 match
-            cb(data.toString().split(' ').filter((el) => {
-                return checkMatch(el);
-            }).length !== 0);
-        });
-
-        arp.stderr.on('data', (data) => {
-            // TODO: logging
-        });
-
-
-    }
-
-    function sendCommand(command) {
+    function sendCommand(command, cb) {
         var reqOptions = {
             url: buildUrl(command),
             headers: {
@@ -97,6 +74,7 @@
         _request(reqOptions, (err, res, body) => {
             // TODO: Logging or something
             console.log('Response:', body);
+            cb(body);
         });
 
         function buildUrl(command) {
