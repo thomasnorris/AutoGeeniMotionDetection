@@ -30,6 +30,7 @@
             console.log('Done scanning.', match ? 'Found' : 'No', 'match!');
             if (match && _away) {
                 // someone just came home
+                console.log('Disabling motion detection.');
                 sendCommand('What time is it?');
                 //sendCommand(DISABLE_MD + ' on ' + CAM_1);
                 //sendCommand(DISABLE_MD + ' on ' + CAM_2);
@@ -37,6 +38,7 @@
                 _away = false;
             } else if (init || (!match && !_away)) {
                 // everyone just left
+                console.log('Enabling motion detection.');
                 sendCommand('How is the weather today?');
                 //sendCommand(ENABLE_MD + ' on ' + CAM_1);
                 //sendCommand(ENABLE_MD + ' on ' + CAM_2);
@@ -85,6 +87,7 @@
             }
         }
 
+        // send the request
         _request(reqOptions, (err, res, body) => {
             // TODO: Logging or something
             console.log('Response:', body);
