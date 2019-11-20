@@ -1,13 +1,12 @@
 (function() {
     var _path = require('path');
     var _request = require('request');
-    var _scan = require('local-devices');
 
     const CAM_1 = 'Doggo Cam';
     const CAM_2 = 'People (Ellie) Cam';
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
-    // MACs should be cupper case
+    // MACs can be uppercase, lowercase, - or : delimited
     const MACS = [
         'CC:C0:79:F1:8F:47',
         'CC:C0:79:83:5B:18'
@@ -27,24 +26,20 @@
     var _away = true;
 
     (function startScanning(init = false) {
-        _away ? console.log('Away') : console.log('Home');
-
-        _scan().then((devices) => {
-            console.log('Scanned', devices.length, 'devices.');
-            var match = devices.some((device) => {
-                return MACS.includes(device.mac.toUpperCase());
-            });
-
+        scan((match) => {
+            console.log('Done scanning.', match ? 'Found' : 'No', 'match!');
             if (match && _away) {
                 // someone just came home
-                sendCommand(DISABLE_MD + ' on ' + CAM_1);
-                sendCommand(DISABLE_MD + ' on ' + CAM_2);
+                sendCommand('What time is it?');
+                //sendCommand(DISABLE_MD + ' on ' + CAM_1);
+                //sendCommand(DISABLE_MD + ' on ' + CAM_2);
                 _scanIntervalMs = SCAN_INTERVALS.HOME;
                 _away = false;
             } else if (init || (!match && !_away)) {
                 // everyone just left
-                sendCommand(ENABLE_MD + ' on ' + CAM_1);
-                sendCommand(ENABLE_MD + ' on ' + CAM_2);
+                sendCommand('How is the weather today?');
+                //sendCommand(ENABLE_MD + ' on ' + CAM_1);
+                //sendCommand(ENABLE_MD + ' on ' + CAM_2);
                 _scanIntervalMs = SCAN_INTERVALS.AWAY;
                 _away = true;
             }
@@ -54,6 +49,35 @@
             }, _scanIntervalMs);
         });
     })(true);
+
+    function scan(cb) {
+        var { spawn } = require('child_process');
+        var arp = spawn('arp', ['-a']);
+
+        arp.stdout.on('data', (data) => {
+            cb(data.toString().split(' ').filter((el) => {
+                return checkMatch(el);
+            }).length !== 0);
+        });
+
+        arp.stderr.on('data', (data) => {
+            // do nothing
+        });
+
+        arp.on('close', (code) => {
+            // do nothing
+        });
+
+        function checkMatch(el) {
+            // check for combinations of upper/lowercase, space or colon delimited
+            return MACS.includes(el.toUpperCase())
+            || MACS.includes(el.toLowerCase())
+            || MACS.includes(el.toUpperCase().split(':').join('-'))
+            || MACS.includes(el.toLowerCase().split(':').join('-'))
+            || MACS.includes(el.toUpperCase().split('-').join(':'))
+            || MACS.includes(el.toLowerCase().split('-').join(':'));
+        }
+    }
 
     function sendCommand(command) {
         var reqOptions = {

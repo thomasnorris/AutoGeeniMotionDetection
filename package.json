@@ -18,7 +18,6 @@
   },
   "homepage": "https://github.com/thomasnorris/AutoGeeniMotionDetection#readme",
   "dependencies": {
-    "local-devices": "^3.0.0",
     "request": "^2.88.0"
   }
 }
