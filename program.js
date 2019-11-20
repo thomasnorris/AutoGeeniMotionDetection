@@ -69,7 +69,7 @@
         });
 
         function buildUrl(command) {
-            return CONFIG.ADDRESS + ':' + CONFIG.PORT + '/' + CONFIG.ENDPOINT + '/' + encodeURI(command);
+            return CONFIG.ADDRESS + '/' + CONFIG.ENDPOINT + '/' + encodeURI(command);
         }
     }
 
