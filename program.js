@@ -51,31 +51,29 @@
     })(true);
 
     function scan(cb) {
+        // see https://nodejs.org/api/child_process.html#child_process_child_process
         var { spawn } = require('child_process');
         var arp = spawn('arp', ['-a']);
 
         arp.stdout.on('data', (data) => {
+            // there must be at least 1 match
             cb(data.toString().split(' ').filter((el) => {
                 return checkMatch(el);
             }).length !== 0);
         });
 
         arp.stderr.on('data', (data) => {
-            // do nothing
-        });
-
-        arp.on('close', (code) => {
-            // do nothing
+            // TODO: logging
         });
 
         function checkMatch(el) {
-            // check for combinations of upper/lowercase, space or colon delimited
+            // check for combinations of upper/lowercase, space or colon delimited addresses
             return MACS.includes(el.toUpperCase())
-            || MACS.includes(el.toLowerCase())
-            || MACS.includes(el.toUpperCase().split(':').join('-'))
-            || MACS.includes(el.toLowerCase().split(':').join('-'))
-            || MACS.includes(el.toUpperCase().split('-').join(':'))
-            || MACS.includes(el.toLowerCase().split('-').join(':'));
+                || MACS.includes(el.toLowerCase())
+                || MACS.includes(el.toUpperCase().split(':').join('-'))
+                || MACS.includes(el.toLowerCase().split(':').join('-'))
+                || MACS.includes(el.toUpperCase().split('-').join(':'))
+                || MACS.includes(el.toLowerCase().split('-').join(':'));
         }
     }
 
