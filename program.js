@@ -1,6 +1,7 @@
 (function() {
     var _path = require('path');
     var _request = require('request');
+    var _scan = require('local-devices');
 
     const CAM_1 = 'Doggo Cam';
     const CAM_2 = 'People (Ellie) Cam';
@@ -26,8 +27,12 @@
     var _away = true;
 
     (function startScanning(init = false) {
-        scan((match) => {
-            console.log('Done scanning.', match ? 'Found' : 'No', 'match!');
+        _scan().then((devices) => {
+            var match = devices.some((device) => {
+                return checkMatch(device);
+            });
+
+            console.log('Done scanning', devices.length, 'devices.' , match ? 'Found' : 'No', 'match!');
             if (match && _away) {
                 // someone just came home
                 sendCommand('What time is it?');
@@ -47,6 +52,17 @@
             setTimeout(() => {
                 startScanning();
             }, _scanIntervalMs);
+
+            function checkMatch(device) {
+                var mac = device.mac;
+                // check for combinations of upper/lowercase/- or : delimited addresses
+                return MACS.includes(mac.toUpperCase())
+                    || MACS.includes(mac.toLowerCase())
+                    || MACS.includes(mac.toUpperCase().split(':').join('-'))
+                    || MACS.includes(mac.toLowerCase().split(':').join('-'))
+                    || MACS.includes(mac.toUpperCase().split('-').join(':'))
+                    || MACS.includes(mac.toLowerCase().split('-').join(':'));
+            }
         });
     })(true);
 
@@ -66,15 +82,7 @@
             // TODO: logging
         });
 
-        function checkMatch(el) {
-            // check for combinations of upper/lowercase/- or : delimited addresses
-            return MACS.includes(el.toUpperCase())
-                || MACS.includes(el.toLowerCase())
-                || MACS.includes(el.toUpperCase().split(':').join('-'))
-                || MACS.includes(el.toLowerCase().split(':').join('-'))
-                || MACS.includes(el.toUpperCase().split('-').join(':'))
-                || MACS.includes(el.toLowerCase().split('-').join(':'));
-        }
+
     }
 
     function sendCommand(command) {
