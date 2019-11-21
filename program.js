@@ -36,6 +36,7 @@
         while (true) {
             // need to manually ping devices
             var match = await ping(IPS.TOM);
+            await wait(3000);
             var res = await sendCommand('how is the weather');
             console.log(res);
         }
@@ -75,6 +76,12 @@
     //     }, _scanIntervalMs);
 
     // })(true);
+
+    function wait(ms) {
+        return new Promise((resolve, reject) => {
+            setTimeout(resolve, ms);
+        });
+    }
 
     function sendCommand(command) {
         return new Promise((resolve, reject) => {
