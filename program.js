@@ -26,7 +26,6 @@
     // main
     (async function(init) {
         while (true) {
-            // ping all devices
             var match = await pingAll();
 
             console.log('Match:', match);
@@ -36,15 +35,14 @@
                 _away = false;
 
                 // send commands
-                await sendCommand(DISABLE_MD + ' on ' + CAM_1).then((res) => {
-                    console.log(res);
-                });
-                await sendCommand(DISABLE_MD + ' on ' + CAM_2).then((res) => {
-                    console.log(res);
-                });
+                // await sendCommand(DISABLE_MD + ' on ' + CAM_1).then((res) => {
+                //     console.log(res);
+                // });
+                // await sendCommand(DISABLE_MD + ' on ' + CAM_2).then((res) => {
+                //     console.log(res);
+                // });
             }
             else if (init || (!match && !_away)) {
-                // default
                 if (init)
                     init = false;
 
@@ -52,15 +50,14 @@
                 _away = true;
 
                 // send commands
-                await sendCommand(ENABLE_MD + ' on ' + CAM_1).then((res) => {
-                    console.log(res);
-                });
-                await sendCommand(ENABLE_MD + ' on ' + CAM_2).then((res) => {
-                    console.log(res);
-                });
+                // await sendCommand(ENABLE_MD + ' on ' + CAM_1).then((res) => {
+                //     console.log(res);
+                // });
+                // await sendCommand(ENABLE_MD + ' on ' + CAM_2).then((res) => {
+                //     console.log(res);
+                // });
             }
 
-            // wait
             await wait(SCAN_WAIT_MS);
         }
     })(true);
@@ -71,20 +68,41 @@
         });
     }
 
-    function sendCommand(command) {
-        return new Promise((resolve, reject) => {
-            var reqOptions = {
-                url:ASSISTANT_CONFIG.ADDRESS + '/' + ASSISTANT_CONFIG.ENDPOINT + '/' + encodeURI(command),
-                headers: {
-                    [ASSISTANT_CONFIG.AUTH.KEY]: ASSISTANT_CONFIG.AUTH.VALUE
+    function sendCommand(commandArr) {
+        if (!Array.isArray(commandArr))
+            commandArr = [commandArr];
+
+        // build promises to send each command
+        var promiseArr = commandArr.map((command) => {
+            return new Promise((resolve, reject) => {
+                var reqOptions = {
+                    url:ASSISTANT_CONFIG.ADDRESS + '/' + ASSISTANT_CONFIG.ENDPOINT + '/' + encodeURI(command),
+                    headers: {
+                        [ASSISTANT_CONFIG.AUTH.KEY]: ASSISTANT_CONFIG.AUTH.VALUE
+                    }
                 }
-            }
 
-            _request(reqOptions, (err, res, body) => {
-                if (err)
-                    throw new Error(err.message);
+                _request(reqOptions, (err, res, body) => {
+                    if (err)
+                        reject(err);
 
-                resolve(body);
+                    resolve(body);
+                });
+            });
+        });
+
+        return new Promise((resolve, reject) => {
+            // wait for all promises to resolve
+            Promise.all(promiseArr).then((resolveArr) => {
+                resolveArr.forEach((res) => {
+                    console.log(res);
+                });
+
+                resolve();
+            }).catch((err) => {
+                // TODO: better error handing
+                console.log('Error:', err.message, '. Command(s) not sent.');
+                resolve();
             });
         });
     }
