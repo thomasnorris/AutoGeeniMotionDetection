@@ -23,6 +23,7 @@
 
     var _away;
 
+    // main
     (async function(init) {
         while (true) {
             // ping all devices
@@ -33,13 +34,14 @@
             if (match && _away) {
                 // someone just came home
                 _away = false;
+
+                // send commands
                 await sendCommand(DISABLE_MD + ' on ' + CAM_1).then((res) => {
                     console.log(res);
                 });
                 await sendCommand(DISABLE_MD + ' on ' + CAM_2).then((res) => {
                     console.log(res);
                 });
-
             }
             else if (init || (!match && !_away)) {
                 // default
@@ -48,6 +50,8 @@
 
                 // everyone is away
                 _away = true;
+
+                // send commands
                 await sendCommand(ENABLE_MD + ' on ' + CAM_1).then((res) => {
                     console.log(res);
                 });
@@ -56,6 +60,7 @@
                 });
             }
 
+            // wait
             await wait(SCAN_WAIT_MS);
         }
     })(true);
