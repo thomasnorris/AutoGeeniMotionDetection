@@ -20,7 +20,8 @@
     // IPs must be static
     // Any new IPS must have a manual 'await ping(ip);' function call
     const IPS = {
-        TOM: '192.168.0.25'
+        TOM: '192.168.0.25',
+        NATH: '192.168.0.26'
     }
 
     // default = away
@@ -30,6 +31,9 @@
         while (true) {
             // need to manually ping devices
             var match = await ping(IPS.TOM);
+
+            if (!match)
+                match = await ping(IPS.NATH);
 
             console.log('Match:', match);
             console.log('Status:', _away ? 'Away' : 'Home');
