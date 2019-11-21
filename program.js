@@ -12,19 +12,15 @@
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
 
-    const SCAN_INTERVAL = 2000;
-    const PING_CFG = {
-        timeout: 2
-    }
+    const SCAN_WAIT_MS = 2000;
+    const PING_TIMEOUT_S = 2;
 
     // IPs must be static
     const IPS = {
         TOM: '192.168.0.25',
-        NATH: '192.168.0.26',
-        LOCAL: '127.0.0.1'
+        NATH: '192.168.0.26'
     }
 
-    // default = away
     var _away;
 
     (async function(init) {
@@ -33,9 +29,10 @@
             var match = await pingAll();
 
             console.log('Match:', match);
-            console.log('Status:', _away ? 'Away' : 'Home');
+            console.log('Status:', init ? 'Init' : _away ? 'Away' : 'Home');
             if (match && _away) {
                 // someone just came home
+                _away = false;
                 await sendCommand(DISABLE_MD + ' on ' + CAM_1).then((res) => {
                     console.log(res);
                 });
@@ -43,24 +40,23 @@
                     console.log(res);
                 });
 
-                _away = false;
             }
             else if (init || (!match && !_away)) {
+                // default
                 if (init)
                     init = false;
 
-                // everybody just left home
+                // everyone is away
+                _away = true;
                 await sendCommand(ENABLE_MD + ' on ' + CAM_1).then((res) => {
                     console.log(res);
                 });
                 await sendCommand(ENABLE_MD + ' on ' + CAM_2).then((res) => {
                     console.log(res);
                 });
-
-                _away = true;
             }
 
-            await wait(SCAN_INTERVAL);
+            await wait(SCAN_WAIT_MS);
         }
     })(true);
 
@@ -73,7 +69,7 @@
     function sendCommand(command) {
         return new Promise((resolve, reject) => {
             var reqOptions = {
-                url: buildUrl(command),
+                url:ASSISTANT_CONFIG.ADDRESS + '/' + ASSISTANT_CONFIG.ENDPOINT + '/' + encodeURI(command),
                 headers: {
                     [ASSISTANT_CONFIG.AUTH.KEY]: ASSISTANT_CONFIG.AUTH.VALUE
                 }
@@ -85,34 +81,31 @@
 
                 resolve(body);
             });
-
-            function buildUrl(command) {
-                return ASSISTANT_CONFIG.ADDRESS + '/' + ASSISTANT_CONFIG.ENDPOINT + '/' + encodeURI(command);
-            }
         });
     }
 
     function pingAll() {
         var match = false;
+        var pingCfg = {
+            timeout: PING_TIMEOUT_S
+        }
+
         // build promises to ping each IP
         var promiseArr = Object.keys(IPS).map((i) => {
             return new Promise((resolve, reject) => {
                 var ip = IPS[i];
+                // ping the ip and resolve
                 _ping.sys.probe(ip, (alive) => {
                     if (alive)
                         match = alive;
-                    resolve({
-                        ip: ip,
-                        alive: alive
-                    });
-                }, PING_CFG);
+                    resolve();
+                }, pingCfg);
             });
         });
 
         return new Promise((resolve, reject) => {
-            // wait for all promises to resolve
-            Promise.all(promiseArr).then((arr) =>{
-                // arr contains each promise resolve
+            // wait for all ping promises to resolve
+            Promise.all(promiseArr).then(() =>{
                 // resolve match
                 resolve(match);
             });
