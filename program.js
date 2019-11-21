@@ -12,58 +12,57 @@
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
 
-    const SCAN_INTERVAL = 2000;
-    const PING_CFG = {
-        timeout: 2
-    }
+    const SCAN_WAIT_MS = 2000;
+    const PING_TIMEOUT_S = 2;
 
     // IPs must be static
-    // Any new IPS must have a manual 'await ping(ip);' function call
     const IPS = {
         TOM: '192.168.0.25',
         NATH: '192.168.0.26'
     }
 
-    // default = away
     var _away;
 
+    // main
     (async function(init) {
         while (true) {
-            // need to manually ping devices
-            var match = await ping(IPS.TOM);
+            // check for a device match
+            var match = await pingAll();
 
-            if (!match)
-                match = await ping(IPS.NATH);
+            console.log('Status:', init ? 'Init' : _away ? 'Away' : 'Home');
 
-            console.log('Match:', match);
-            console.log('Status:', _away ? 'Away' : 'Home');
+            // someone just came home
             if (match && _away) {
-                // someone just came home
-                await sendCommand(DISABLE_MD + ' on ' + CAM_1).then((res) => {
-                    console.log(res);
+                await sendCommands([
+                    DISABLE_MD + ' on ' + CAM_1,
+                    DISABLE_MD + ' on ' + CAM_2
+                ]).then((dataArr) => {
+                    // only change status on success
+                    _away = false;
+                }).catch((err) => {
+                    // TODO: better error handing
+                    console.log('Error:', err.message, '. Command(s) not sent.');
                 });
-                await sendCommand(DISABLE_MD + ' on ' + CAM_2).then((res) => {
-                    console.log(res);
-                });
-
-                _away = false;
             }
+
+            // everyone is away
             else if (init || (!match && !_away)) {
                 if (init)
                     init = false;
 
-                // everybody just left home
-                await sendCommand(ENABLE_MD + ' on ' + CAM_1).then((res) => {
-                    console.log(res);
+                await sendCommands([
+                    ENABLE_MD + ' on ' + CAM_1,
+                    ENABLE_MD + ' on ' + CAM_2
+                ]).then((dataArr) => {
+                    // only change status on success
+                    _away = true;
+                }).catch((err) => {
+                    // TODO: better error handing
+                    console.log('Error:', err.message, '. Command(s) not sent.');
                 });
-                await sendCommand(ENABLE_MD + ' on ' + CAM_2).then((res) => {
-                    console.log(res);
-                });
-
-                _away = true;
             }
 
-            await wait(SCAN_INTERVAL);
+            await wait(SCAN_WAIT_MS);
         }
     })(true);
 
@@ -73,34 +72,68 @@
         });
     }
 
-    function sendCommand(command) {
-        return new Promise((resolve, reject) => {
-            var reqOptions = {
-                url: buildUrl(command),
-                headers: {
-                    [ASSISTANT_CONFIG.AUTH.KEY]: ASSISTANT_CONFIG.AUTH.VALUE
+    function sendCommands(commandArr) {
+        // if a single command is passed, convert to array
+        if (!Array.isArray(commandArr))
+            commandArr = [commandArr];
+
+        // build promises to send each command
+        var promiseArr = commandArr.map((command) => {
+            return new Promise((resolve, reject) => {
+                var reqOptions = {
+                    url:ASSISTANT_CONFIG.ADDRESS + '/' + ASSISTANT_CONFIG.ENDPOINT + '/' + encodeURI(command),
+                    headers: {
+                        [ASSISTANT_CONFIG.AUTH.KEY]: ASSISTANT_CONFIG.AUTH.VALUE
+                    }
                 }
-            }
 
-            _request(reqOptions, (err, res, body) => {
-                if (err)
-                    reject(err);
-
-                resolve(body);
+                _request(reqOptions, (err, res, body) => {
+                    if (err)
+                        reject(err);
+                    else
+                        resolve(body);
+                });
             });
+        });
 
-            function buildUrl(command) {
-                return ASSISTANT_CONFIG.ADDRESS + '/' + ASSISTANT_CONFIG.ENDPOINT + '/' + encodeURI(command);
-            }
+        return new Promise((resolve, reject) => {
+            // wait for all promises to resolve
+            Promise.all(promiseArr).then((resolveArr) => {
+                // all requests have been sent
+                resolve(resolveArr);
+            }).catch((err) => {
+                // at least one request failed
+                reject(err);
+            });
         });
     }
 
-    function ping(ip) {
-        return new Promise((resolve, reject) => {
-            _ping.sys.probe(ip, (alive) => {
-                resolve(alive);
-            }, PING_CFG);
+    function pingAll() {
+        var match = false;
+        var pingCfg = {
+            timeout: PING_TIMEOUT_S
+        }
+
+        // build promises to ping each IP
+        var promiseArr = Object.keys(IPS).map((i) => {
+            return new Promise((resolve, reject) => {
+                var ip = IPS[i];
+                // ping the ip and resolve
+                _ping.sys.probe(ip, (alive) => {
+                    if (alive)
+                        match = alive;
+                    resolve();
+                }, pingCfg);
+            });
         });
+
+        return new Promise((resolve, reject) => {
+            // wait for all ping promises to resolve
+            Promise.all(promiseArr).then(() =>{
+                // resolve match
+                resolve(match);
+            });
+        })
     }
 
     function readJson(filePath) {

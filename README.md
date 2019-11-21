@@ -8,15 +8,21 @@
     - This can be done through the Google Home app or the Geeni app.
 ### Google Assistant Server
 - [REST-GoogleAssistant](https://github.com/thomasnorris/REST-GoogleAssistant) must be set up and operational.
-    - Take note of:
-        - The port that the server is listening on.
-            - Make sure that the port is forwarded.
-        - The `auth.json` with the header key/value
-            - Both of these will be needed to authenticate.
+- Take note of:
+    - The port that the server is listening on.
+        - Make sure that the port is forwarded.
+    - The public address of the server.
+    - The `config/auth.json` file.
 ## Installation
 - Everything in the __Prerequisites__ section must be done first!
 - After cloning:
-    - Run `npm install` to install packages.
-    - Run `node program.js` to start.
+    - In the `config` folder
+        - Copy `assistant_config_template.json` and rename to `assistant_config.json`.
+        - Fill in the required information.
+            - The header key/value pair from `config/auth.json` __must__ be used.
+    - In the `root` directory
+        - Run `npm install` to install packages.
+            - Also run `npm rebuild` if instructed to do so.
+        - Run `node program.js` to start.
 - Optionally, add the following line to `/etc/rc.local` for auto startup:
     - `sudo node "/PATH/TO/REPO/program.js"`.
