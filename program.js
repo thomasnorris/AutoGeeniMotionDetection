@@ -1,107 +1,102 @@
 (function() {
     var _path = require('path');
     var _request = require('request');
-    var _scan = require('local-devices');
+    var _ping = require('ping');
+
+    const CONFIG_FOLDER = 'config';
+    const ASSISTANT_CONFIG_FILE = 'assistant_config.json';
+    const ASSISTANT_CONFIG = readJson(_path.resolve(__dirname, CONFIG_FOLDER, ASSISTANT_CONFIG_FILE));
 
     const CAM_1 = 'Doggo Cam';
     const CAM_2 = 'People (Ellie) Cam';
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
-    // MACs can be uppercase, lowercase, - or : delimited
-    const MACS = [
-        'CC:C0:79:F1:8F:47',
-        'CC:C0:79:83:5B:18'
-    ];
-    // milliseconds
-    const SCAN_INTERVALS = {
-        HOME: '5000',
-        AWAY: '2000'
-    };
-    const CONFIG_FOLDER = 'config';
-    const CONFIG_FILE = 'assistant_config.json';
 
-    const CONFIG = readJson(_path.resolve(__dirname, CONFIG_FOLDER, CONFIG_FILE));
+    const SCAN_INTERVAL = 2000;
+    const PING_CFG = {
+        timeout: 2
+    }
+
+    // IPs must be static
+    // Any new IPS must have a manual 'await ping(ip);' function call
+    const IPS = {
+        TOM: '192.168.0.25'
+    }
 
     // default = away
-    var _scanIntervalMs = SCAN_INTERVALS.AWAY;
-    var _away = true;
+    var _away;
 
-    (function startScanning(init = false) {
-        _scan().then((devices) => {
-            var match = devices.some((device) => {
-                return checkMatch(device);
-            });
+    (async function(init) {
+        while (true) {
+            // need to manually ping devices
+            var match = await ping(IPS.TOM);
 
-            console.log('Done scanning', devices.length, 'devices.' , match ? 'Found' : 'No', 'match!');
+            console.log('Match:', match);
+            console.log('Status:', _away ? 'Away' : 'Home');
             if (match && _away) {
                 // someone just came home
-                sendCommand('What time is it?');
-                //sendCommand(DISABLE_MD + ' on ' + CAM_1);
-                //sendCommand(DISABLE_MD + ' on ' + CAM_2);
-                _scanIntervalMs = SCAN_INTERVALS.HOME;
+                await sendCommand(DISABLE_MD + ' on ' + CAM_1).then((res) => {
+                    console.log(res);
+                });
+                await sendCommand(DISABLE_MD + ' on ' + CAM_2).then((res) => {
+                    console.log(res);
+                });
+
                 _away = false;
-            } else if (init || (!match && !_away)) {
-                // everyone just left
-                sendCommand('How is the weather today?');
-                //sendCommand(ENABLE_MD + ' on ' + CAM_1);
-                //sendCommand(ENABLE_MD + ' on ' + CAM_2);
-                _scanIntervalMs = SCAN_INTERVALS.AWAY;
+            }
+            else if (init || (!match && !_away)) {
+                if (init)
+                    init = false;
+
+                // everybody just left home
+                await sendCommand(ENABLE_MD + ' on ' + CAM_1).then((res) => {
+                    console.log(res);
+                });
+                await sendCommand(ENABLE_MD + ' on ' + CAM_2).then((res) => {
+                    console.log(res);
+                });
+
                 _away = true;
             }
 
-            setTimeout(() => {
-                startScanning();
-            }, _scanIntervalMs);
-
-            function checkMatch(device) {
-                var mac = device.mac;
-                // check for combinations of upper/lowercase/- or : delimited addresses
-                return MACS.includes(mac.toUpperCase())
-                    || MACS.includes(mac.toLowerCase())
-                    || MACS.includes(mac.toUpperCase().split(':').join('-'))
-                    || MACS.includes(mac.toLowerCase().split(':').join('-'))
-                    || MACS.includes(mac.toUpperCase().split('-').join(':'))
-                    || MACS.includes(mac.toLowerCase().split('-').join(':'));
-            }
-        });
+            await wait(SCAN_INTERVAL);
+        }
     })(true);
 
-    function scan(cb) {
-        // see https://nodejs.org/api/child_process.html#child_process_child_process
-        var { spawn } = require('child_process');
-        var arp = spawn('arp', ['-a']);
-
-        arp.stdout.on('data', (data) => {
-            // there must be at least 1 match
-            cb(data.toString().split(' ').filter((el) => {
-                return checkMatch(el);
-            }).length !== 0);
+    function wait(ms) {
+        return new Promise((resolve, reject) => {
+            setTimeout(resolve, ms);
         });
-
-        arp.stderr.on('data', (data) => {
-            // TODO: logging
-        });
-
-
     }
 
     function sendCommand(command) {
-        var reqOptions = {
-            url: buildUrl(command),
-            headers: {
-                [CONFIG.AUTH.KEY]: CONFIG.AUTH.VALUE
+        return new Promise((resolve, reject) => {
+            var reqOptions = {
+                url: buildUrl(command),
+                headers: {
+                    [ASSISTANT_CONFIG.AUTH.KEY]: ASSISTANT_CONFIG.AUTH.VALUE
+                }
             }
-        }
 
-        // send the request
-        _request(reqOptions, (err, res, body) => {
-            // TODO: Logging or something
-            console.log('Response:', body);
+            _request(reqOptions, (err, res, body) => {
+                if (err)
+                    reject(err);
+
+                resolve(body);
+            });
+
+            function buildUrl(command) {
+                return ASSISTANT_CONFIG.ADDRESS + '/' + ASSISTANT_CONFIG.ENDPOINT + '/' + encodeURI(command);
+            }
         });
+    }
 
-        function buildUrl(command) {
-            return CONFIG.ADDRESS + '/' + CONFIG.ENDPOINT + '/' + encodeURI(command);
-        }
+    function ping(ip) {
+        return new Promise((resolve, reject) => {
+            _ping.sys.probe(ip, (alive) => {
+                resolve(alive);
+            }, PING_CFG);
+        });
     }
 
     function readJson(filePath) {
