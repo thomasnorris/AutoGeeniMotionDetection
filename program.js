@@ -25,36 +25,42 @@
 
     // main
     (async function(init) {
-        var commands;
         while (true) {
-            commands = false;
-
             // check for a device match
             var match = await pingAll();
 
             console.log('Status:', init ? 'Init' : _away ? 'Away' : 'Home');
+
+            // someone just came home
             if (match && _away) {
-                // someone just came home
-                _away = false;
-                commands = [
+                await sendCommands([
                     DISABLE_MD + ' on ' + CAM_1,
                     DISABLE_MD + ' on ' + CAM_2
-                ]
+                ]).then((dataArr) => {
+                    // only change status on success
+                    _away = false;
+                }).catch((err) => {
+                    // TODO: better error handing
+                    console.log('Error:', err.message, '. Command(s) not sent.');
+                });
             }
+
+            // everyone is away
             else if (init || (!match && !_away)) {
                 if (init)
                     init = false;
 
-                // everyone is away
-                _away = true;
-                commands = [
+                await sendCommands([
                     ENABLE_MD + ' on ' + CAM_1,
                     ENABLE_MD + ' on ' + CAM_2
-                ]
+                ]).then((dataArr) => {
+                    // only change status on success
+                    _away = true;
+                }).catch((err) => {
+                    // TODO: better error handing
+                    console.log('Error:', err.message, '. Command(s) not sent.');
+                });
             }
-
-            if (commands)
-                await sendCommands(commands);
 
             await wait(SCAN_WAIT_MS);
         }
@@ -67,6 +73,7 @@
     }
 
     function sendCommands(commandArr) {
+        // if a single command is passed, convert to array
         if (!Array.isArray(commandArr))
             commandArr = [commandArr];
 
@@ -83,8 +90,8 @@
                 _request(reqOptions, (err, res, body) => {
                     if (err)
                         reject(err);
-
-                    resolve(body);
+                    else
+                        resolve(body);
                 });
             });
         });
@@ -92,15 +99,11 @@
         return new Promise((resolve, reject) => {
             // wait for all promises to resolve
             Promise.all(promiseArr).then((resolveArr) => {
-                resolveArr.forEach((res) => {
-                    console.log(res);
-                });
-
-                resolve();
+                // all requests have been sent
+                resolve(resolveArr);
             }).catch((err) => {
-                // TODO: better error handing
-                console.log('Error:', err.message, '. Command(s) not sent.');
-                resolve();
+                // at least one request failed
+                reject(err);
             });
         });
     }
