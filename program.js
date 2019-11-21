@@ -25,22 +25,22 @@
 
     // main
     (async function(init) {
+        var commands;
         while (true) {
+            // check for a device match
             var match = await pingAll();
 
-            console.log('Match:', match);
             console.log('Status:', init ? 'Init' : _away ? 'Away' : 'Home');
             if (match && _away) {
                 // someone just came home
                 _away = false;
+                commands = [
+                    DISABLE_MD + ' on ' + CAM_1,
+                    DISABLE_MD + ' on ' + CAM_2
+                ]
 
                 // send commands
-                // await sendCommand(DISABLE_MD + ' on ' + CAM_1).then((res) => {
-                //     console.log(res);
-                // });
-                // await sendCommand(DISABLE_MD + ' on ' + CAM_2).then((res) => {
-                //     console.log(res);
-                // });
+                await sendCommands(commands);
             }
             else if (init || (!match && !_away)) {
                 if (init)
@@ -48,14 +48,13 @@
 
                 // everyone is away
                 _away = true;
+                commands = [
+                    ENABLE_MD + ' on ' + CAM_1,
+                    ENABLE_MD + ' on ' + CAM_2
+                ]
 
                 // send commands
-                // await sendCommand(ENABLE_MD + ' on ' + CAM_1).then((res) => {
-                //     console.log(res);
-                // });
-                // await sendCommand(ENABLE_MD + ' on ' + CAM_2).then((res) => {
-                //     console.log(res);
-                // });
+                await sendCommands(commands);
             }
 
             await wait(SCAN_WAIT_MS);
@@ -68,7 +67,7 @@
         });
     }
 
-    function sendCommand(commandArr) {
+    function sendCommands(commandArr) {
         if (!Array.isArray(commandArr))
             commandArr = [commandArr];
 
