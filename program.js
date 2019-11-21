@@ -84,7 +84,7 @@
 
             _request(reqOptions, (err, res, body) => {
                 if (err)
-                    reject(err);
+                    throw new Error(err.message);
 
                 resolve(body);
             });
