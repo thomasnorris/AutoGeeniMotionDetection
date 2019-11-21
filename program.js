@@ -3,26 +3,25 @@
     var _request = require('request');
     var _ping = require('ping');
 
+    const CONFIG_FOLDER = 'config';
+    const ASSISTANT_CONFIG_FILE = 'assistant_config.json';
+    const ASSISTANT_CONFIG = readJson(_path.resolve(__dirname, CONFIG_FOLDER, ASSISTANT_CONFIG_FILE));
+
     const CAM_1 = 'Doggo Cam';
     const CAM_2 = 'People (Ellie) Cam';
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
 
-    // IPs must be static
-    // Any new IPS must have a manual 'await ping(ip)' function call
-    const IPS = {
-        TOM: '192.168.0.25'
-    }
-
+    const SCAN_INTERVAL = 2000;
     const PING_CFG = {
         timeout: 2
     }
 
-    const SCAN_INTERVAL = 2000;
-
-    const CONFIG_FOLDER = 'config';
-    const CONFIG_FILE = 'assistant_config.json';
-    const CONFIG = readJson(_path.resolve(__dirname, CONFIG_FOLDER, CONFIG_FILE));
+    // IPs must be static
+    // Any new IPS must have a manual 'await ping(ip);' function call
+    const IPS = {
+        TOM: '192.168.0.25'
+    }
 
     // default = away
     var _away;
@@ -49,6 +48,7 @@
                 if (init)
                     init = false;
 
+                // everybody just left home
                 await sendCommand(ENABLE_MD + ' on ' + CAM_1).then((res) => {
                     console.log(res);
                 });
@@ -74,20 +74,19 @@
             var reqOptions = {
                 url: buildUrl(command),
                 headers: {
-                    [CONFIG.AUTH.KEY]: CONFIG.AUTH.VALUE
+                    [ASSISTANT_CONFIG.AUTH.KEY]: ASSISTANT_CONFIG.AUTH.VALUE
                 }
             }
 
-            // send the request
             _request(reqOptions, (err, res, body) => {
                 if (err)
                     reject(err);
-                // send response body
+
                 resolve(body);
             });
 
             function buildUrl(command) {
-                return CONFIG.ADDRESS + '/' + CONFIG.ENDPOINT + '/' + encodeURI(command);
+                return ASSISTANT_CONFIG.ADDRESS + '/' + ASSISTANT_CONFIG.ENDPOINT + '/' + encodeURI(command);
             }
         });
     }
