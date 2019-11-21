@@ -27,6 +27,8 @@
     (async function(init) {
         var commands;
         while (true) {
+            commands = false;
+
             // check for a device match
             var match = await pingAll();
 
@@ -38,9 +40,6 @@
                     DISABLE_MD + ' on ' + CAM_1,
                     DISABLE_MD + ' on ' + CAM_2
                 ]
-
-                // send commands
-                await sendCommands(commands);
             }
             else if (init || (!match && !_away)) {
                 if (init)
@@ -52,10 +51,10 @@
                     ENABLE_MD + ' on ' + CAM_1,
                     ENABLE_MD + ' on ' + CAM_2
                 ]
-
-                // send commands
-                await sendCommands(commands);
             }
+
+            if (commands)
+                await sendCommands(commands);
 
             await wait(SCAN_WAIT_MS);
         }
