@@ -8,12 +8,14 @@
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
 
-    // IPs must be static
-    const IPS = [
-        '192.168.24.139'
-    ]
+    // Any new IPS must have a manual 'await ping(ip)' function call inside while loop
+    const IPS = {
+        TOM: '192.168.0.25'
+    }
 
-    // todo: change to ping timeout
+    const PING_CFG = {
+        timeout: 2
+    }
     const SCAN_INTERVALS = {
         HOME: '5000',
         AWAY: '2000'
@@ -27,59 +29,45 @@
     var _scanIntervalMs = SCAN_INTERVALS.AWAY;
     var _away = true;
 
-    (function run(init = false) {
-        var match;
-        IPS.forEach((ip) => {
-            _ping.sys.probe(ip, (alive) => {
-                match = alive;
-            }, {
-                timeout: 2
+    (async function() {
+        while (true) {
+            // need to manually ping devices
+            var match = await ping(IPS.TOM);
+
+            var res = await sendCommand('how is the weather');
+            console.log(res);
+        }
+    })();
+
+    function sendCommand(command) {
+        return new Promise((resolve, reject) => {
+            var reqOptions = {
+                url: buildUrl(command),
+                headers: {
+                    [CONFIG.AUTH.KEY]: CONFIG.AUTH.VALUE
+                }
+            }
+
+            // send the request
+            _request(reqOptions, (err, res, body) => {
+                if (err)
+                    reject(err);
+                // send response body
+                resolve(body);
             });
-        });
 
-        setTimeout(() => {
-            console.log('Match:', match);
-            console.log('Status:', _away ? 'Away' : 'Home');
-            if (match && _away) {
-                // someone just came home
-                sendCommand('What time is it?', (res) => {
-                    _scanIntervalMs = SCAN_INTERVALS.HOME;
-                    _away = false;
-                });
-                //sendCommand(DISABLE_MD + ' on ' + CAM_1);
-                //sendCommand(DISABLE_MD + ' on ' + CAM_2);
-            } else if (init || (!match && !_away)) {
-                // everyone just left
-                sendCommand('How is the weather today?', (res) => {
-                    _scanIntervalMs = SCAN_INTERVALS.AWAY;
-                    _away = true;
-                });
-                //sendCommand(ENABLE_MD + ' on ' + CAM_1);
-                //sendCommand(ENABLE_MD + ' on ' + CAM_2);
+            function buildUrl(command) {
+                return CONFIG.ADDRESS + '/' + CONFIG.ENDPOINT + '/' + encodeURI(command);
             }
-            run();
-        }, _scanIntervalMs);
-
-    })(true);
-
-    function sendCommand(command, cb) {
-        var reqOptions = {
-            url: buildUrl(command),
-            headers: {
-                [CONFIG.AUTH.KEY]: CONFIG.AUTH.VALUE
-            }
-        }
-
-        // send the request
-        _request(reqOptions, (err, res, body) => {
-            // TODO: Logging or something
-            console.log('Response:', body);
-            cb(body);
         });
+    }
 
-        function buildUrl(command) {
-            return CONFIG.ADDRESS + '/' + CONFIG.ENDPOINT + '/' + encodeURI(command);
-        }
+    function ping(ip) {
+        return new Promise((resolve, reject) => {
+            _ping.sys.probe(ip, (alive) => {
+                resolve(alive);
+            }, PING_CFG);
+        });
     }
 
     function readJson(filePath) {
