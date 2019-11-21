@@ -18,10 +18,10 @@
     }
 
     // IPs must be static
-    // Any new IPS must have a manual 'await ping(ip);' function call
     const IPS = {
         TOM: '192.168.0.25',
-        NATH: '192.168.0.26'
+        NATH: '192.168.0.26',
+        LOCAL: '127.0.0.1'
     }
 
     // default = away
@@ -29,11 +29,8 @@
 
     (async function(init) {
         while (true) {
-            // need to manually ping devices
-            var match = await ping(IPS.TOM);
-
-            if (!match)
-                match = await ping(IPS.NATH);
+            // ping all devices
+            var match = await pingAll();
 
             console.log('Match:', match);
             console.log('Status:', _away ? 'Away' : 'Home');
@@ -95,12 +92,31 @@
         });
     }
 
-    function ping(ip) {
-        return new Promise((resolve, reject) => {
-            _ping.sys.probe(ip, (alive) => {
-                resolve(alive);
-            }, PING_CFG);
+    function pingAll() {
+        var match = false;
+        // build promises to ping each IP
+        var promiseArr = Object.keys(IPS).map((i) => {
+            return new Promise((resolve, reject) => {
+                var ip = IPS[i];
+                _ping.sys.probe(ip, (alive) => {
+                    if (alive)
+                        match = alive;
+                    resolve({
+                        ip: ip,
+                        alive: alive
+                    });
+                }, PING_CFG);
+            });
         });
+
+        return new Promise((resolve, reject) => {
+            // wait for all promises to resolve
+            Promise.all(promiseArr).then((arr) =>{
+                // arr contains each promise resolve
+                // resolve match
+                resolve(match);
+            });
+        })
     }
 
     function readJson(filePath) {
