@@ -18,64 +18,50 @@
         timeout: 2
     }
 
-    // todo: change to ping timeout
-    const SCAN_INTERVALS = {
-        HOME: '5000',
-        AWAY: '2000'
-    };
+    const SCAN_INTERVAL = 2000;
 
     const CONFIG_FOLDER = 'config';
     const CONFIG_FILE = 'assistant_config.json';
     const CONFIG = readJson(_path.resolve(__dirname, CONFIG_FOLDER, CONFIG_FILE));
 
     // default = away
-    var _scanIntervalMs = SCAN_INTERVALS.AWAY;
-    var _away = true;
+    var _away;
 
-    (async function() {
+    (async function(init) {
         while (true) {
             // need to manually ping devices
             var match = await ping(IPS.TOM);
-            await wait(3000);
-            var res = await sendCommand('how is the weather');
-            console.log(res);
+
+            console.log('Match:', match);
+            console.log('Status:', _away ? 'Away' : 'Home');
+            if (match && _away) {
+                // someone just came home
+                await sendCommand(DISABLE_MD + ' on ' + CAM_1).then((res) => {
+                    console.log(res);
+                });
+                await sendCommand(DISABLE_MD + ' on ' + CAM_2).then((res) => {
+                    console.log(res);
+                });
+
+                _away = false;
+            }
+            else if (init || (!match && !_away)) {
+                if (init)
+                    init = false;
+
+                await sendCommand(ENABLE_MD + ' on ' + CAM_1).then((res) => {
+                    console.log(res);
+                });
+                await sendCommand(ENABLE_MD + ' on ' + CAM_2).then((res) => {
+                    console.log(res);
+                });
+
+                _away = true;
+            }
+
+            await wait(SCAN_INTERVAL);
         }
-    })();
-
-    // (function run(init = false) {
-    //     var match;
-    //     IPS.forEach((ip) => {
-    //         _ping.sys.probe(ip, (alive) => {
-    //             match = alive;
-    //         }, {
-    //             timeout: 2
-    //         });
-    //     });
-
-    //     setTimeout(() => {
-    //         console.log('Match:', match);
-    //         console.log('Status:', _away ? 'Away' : 'Home');
-    //         if (match && _away) {
-    //             // someone just came home
-    //             sendCommand('What time is it?', (res) => {
-    //                 _scanIntervalMs = SCAN_INTERVALS.HOME;
-    //                 _away = false;
-    //             });
-    //             //sendCommand(DISABLE_MD + ' on ' + CAM_1);
-    //             //sendCommand(DISABLE_MD + ' on ' + CAM_2);
-    //         } else if (init || (!match && !_away)) {
-    //             // everyone just left
-    //             sendCommand('How is the weather today?', (res) => {
-    //                 _scanIntervalMs = SCAN_INTERVALS.AWAY;
-    //                 _away = true;
-    //             });
-    //             //sendCommand(ENABLE_MD + ' on ' + CAM_1);
-    //             //sendCommand(ENABLE_MD + ' on ' + CAM_2);
-    //         }
-    //         run();
-    //     }, _scanIntervalMs);
-
-    // })(true);
+    })(true);
 
     function wait(ms) {
         return new Promise((resolve, reject) => {
