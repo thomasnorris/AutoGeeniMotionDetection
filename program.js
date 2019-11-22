@@ -7,15 +7,15 @@
     const ASSISTANT_CONFIG_FILE = 'assistant_config.json';
     const ASSISTANT_CONFIG = readJson(_path.resolve(__dirname, CONFIG_FOLDER, ASSISTANT_CONFIG_FILE));
 
-    const CAM_1 = 'Doggo Cam';
-    const CAM_2 = 'People (Ellie) Cam';
+    const CAM_1 = 'People (Ellie) Cam';
+    const CAM_2 = 'Doggo Cam';
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
 
     const SCAN_WAIT_MS = 2000;
     const PING_TIMEOUT_S = 2;
 
-    // IPs must be static
+    // IPs must be static, set at router level
     const IPS = {
         TOM: '192.168.0.25',
         NATH: '192.168.0.26'
@@ -45,7 +45,7 @@
                 });
             }
 
-            // everyone is away
+            // everyone is away or init
             else if (init || (!match && !_away)) {
                 if (init)
                     init = false;
@@ -62,7 +62,10 @@
                 });
             }
 
-            await wait(SCAN_WAIT_MS);
+            // only have to wait if someone is home because scanning all devices when
+            // no one is home introduces a delay
+            if (!_away)
+                await wait(SCAN_WAIT_MS);
         }
     })(true);
 
@@ -87,6 +90,8 @@
                     }
                 }
 
+                console.log('Sending command: ', command);
+
                 _request(reqOptions, (err, res, body) => {
                     if (err)
                         reject(err);
@@ -97,19 +102,17 @@
         });
 
         return new Promise((resolve, reject) => {
-            // wait for all promises to resolve
             Promise.all(promiseArr).then((resolveArr) => {
-                // all requests have been sent
+                // all requests have been sent, exit
                 resolve(resolveArr);
             }).catch((err) => {
-                // at least one request failed
+                // at least one request failed, exit
                 reject(err);
             });
         });
     }
 
     function pingAll() {
-        var match = false;
         var pingCfg = {
             timeout: PING_TIMEOUT_S
         }
@@ -120,8 +123,11 @@
                 var ip = IPS[i];
                 // ping the ip and resolve
                 _ping.sys.probe(ip, (alive) => {
+                    // if alive, reject to prevent pinging other devices
                     if (alive)
-                        match = alive;
+                        reject();
+
+                    // no match, resolve false and ping next device
                     resolve();
                 }, pingCfg);
             });
@@ -130,8 +136,11 @@
         return new Promise((resolve, reject) => {
             // wait for all ping promises to resolve
             Promise.all(promiseArr).then(() =>{
-                // resolve match
-                resolve(match);
+                // no device was found
+                resolve(false);
+            }).catch(() => {
+                // a device was found, so the rest were skipped
+                resolve(true);
             });
         })
     }
