@@ -1,3 +1,5 @@
-node_modules
-config/*
-!config/assistant_config_template.json
+node_modules/*
+!node_modules/local-modules.js
+
+assistant_client/*
+!assistant_client/.gitkeep

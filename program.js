@@ -1,11 +1,9 @@
-(function() {
-    var _path = require('path');
-    var _request = require('request');
-    var _ping = require('ping');
 
-    const CONFIG_FOLDER = 'config';
-    const ASSISTANT_CONFIG_FILE = 'assistant_config.json';
-    const ASSISTANT_CONFIG = readJson(_path.resolve(__dirname, CONFIG_FOLDER, ASSISTANT_CONFIG_FILE));
+global.requireLocal = require('local-modules.js').GetModule;
+
+(function() {
+    var _ping = require('ping');
+    var _assistant = requireLocal('assistant-client');
 
     const CAM_1 = 'People (Ellie) Cam';
     const CAM_2 = 'Doggo Cam';
@@ -33,7 +31,7 @@
 
             // someone just came home
             if (match && _away) {
-                await sendCommands([
+                await _assistant.Send([
                     DISABLE_MD + ' on ' + CAM_1,
                     DISABLE_MD + ' on ' + CAM_2
                 ]).then((dataArr) => {
@@ -50,7 +48,7 @@
                 if (init)
                     init = false;
 
-                await sendCommands([
+                await _assistant.Send([
                     ENABLE_MD + ' on ' + CAM_1,
                     ENABLE_MD + ' on ' + CAM_2
                 ]).then((dataArr) => {
@@ -72,43 +70,6 @@
     function wait(ms) {
         return new Promise((resolve, reject) => {
             setTimeout(resolve, ms);
-        });
-    }
-
-    function sendCommands(commandArr) {
-        // if a single command is passed, convert to array
-        if (!Array.isArray(commandArr))
-            commandArr = [commandArr];
-
-        // build promises to send each command
-        var promiseArr = commandArr.map((command) => {
-            return new Promise((resolve, reject) => {
-                var reqOptions = {
-                    url:ASSISTANT_CONFIG.ADDRESS + '/' + ASSISTANT_CONFIG.ENDPOINT + '/' + encodeURI(command),
-                    headers: {
-                        [ASSISTANT_CONFIG.AUTH.KEY]: ASSISTANT_CONFIG.AUTH.VALUE
-                    }
-                }
-
-                console.log('Sending command: ', command);
-
-                _request(reqOptions, (err, res, body) => {
-                    if (err)
-                        reject(err);
-                    else
-                        resolve(body);
-                });
-            });
-        });
-
-        return new Promise((resolve, reject) => {
-            Promise.all(promiseArr).then((resolveArr) => {
-                // all requests have been sent, exit
-                resolve(resolveArr);
-            }).catch((err) => {
-                // at least one request failed, exit
-                reject(err);
-            });
         });
     }
 
@@ -143,10 +104,5 @@
                 resolve(true);
             });
         })
-    }
-
-    function readJson(filePath) {
-        var fs = require('fs');
-        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
     }
 })();
