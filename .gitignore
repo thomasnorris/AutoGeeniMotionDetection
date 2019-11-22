@@ -1,4 +1,5 @@
 node_modules/*
 !node_modules/local-modules.js
 
-assistant_client/config.json
+assistant_client/*
+!assistant_client/.gitkeep
