@@ -16,15 +16,9 @@
     - The `config/auth.json` file.
 ## Installation
 - Everything in the __Prerequisites__ section must be done first!
-- After cloning:
-    - In the `config` folder:
-        - Copy `assistant_config_template.json` and rename to `assistant_config.json`.
-        - Fill in the required information.
-            - The header key/value pair from `config/auth.json` __must__ be used.
-    - In the `root` directory:
-        - Copy the `node_client` folder here and follow the [setup instructions](https://github.com/thomasnorris/REST-GoogleAssistant#nodejs-client)
-        - Run `npm install` to install packages.
-            - Also run `npm rebuild` if instructed to do so.
-        - Run `node program.js` to start.
+- After cloning
+    - Copy the `node_client` folder (downloaded earlier) here and follow the [setup instructions](https://github.com/thomasnorris/REST-GoogleAssistant#nodejs-client)
+    - Run `npm install` to install packages.
+    - Run `node program.js` to start.
 - Optionally, add the following line to `/etc/rc.local` for auto startup:
     - `sudo node "/PATH/TO/REPO/program.js"`.
