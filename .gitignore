@@ -1,4 +1,4 @@
 node_modules/*
 !node_modules/local-modules.js
 
-node_client/*
+assistant_client/*
