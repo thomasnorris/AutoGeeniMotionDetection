@@ -8,7 +8,7 @@
     - This can be done through the Google Home app or the Geeni app.
 ### Google Assistant Server
 - [REST-GoogleAssistant](https://github.com/thomasnorris/REST-GoogleAssistant) must be set up and operational.
-    - Also download the `node_client` folder.
+    - Also download the `node_client` folder and rename to `assistant_client`.
 - Take note of:
     - The port that the server is listening on.
         - Make sure that the port is forwarded.
@@ -17,7 +17,7 @@
 ## Installation
 - Everything in the __Prerequisites__ section must be done first!
 - After cloning
-    - Copy the `node_client` folder (downloaded earlier) here and follow the [setup instructions](https://github.com/thomasnorris/REST-GoogleAssistant#nodejs-client)
+    - Copy the `assistant_client` folder (downloaded earlier) here and follow the [setup instructions](https://github.com/thomasnorris/REST-GoogleAssistant#nodejs-client)
     - Run `npm install` to install packages.
     - Run `node program.js` to start.
 - Optionally, add the following line to `/etc/rc.local` for auto startup:
