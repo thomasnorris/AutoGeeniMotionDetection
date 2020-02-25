@@ -1,11 +1,9 @@
-
-global.requireLocal = require('local-modules.js').GetModule;
-
 (function() {
     var _ping = require('ping');
-    var _assistant = requireLocal('assistant-client');
+    var _path = require('path');
+    var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
 
-    const CAM_1 = 'People (Ellie) Cam';
+    const CAM_1 = 'Living Room Cam';
     const CAM_2 = 'Doggo Cam';
     const ENABLE_MD = 'Enable motion detection';
     const DISABLE_MD = 'Disable motion detection';
