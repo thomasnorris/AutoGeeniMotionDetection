@@ -1,0 +1,3 @@
+[submodule "REST-GoogleAssistant-Client"]
+	path = REST-GoogleAssistant-Client
+	url = git@github.com:thomasnorris/REST-GoogleAssistant-Client.git
