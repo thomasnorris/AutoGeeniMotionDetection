@@ -1,3 +1,6 @@
 [submodule "REST-GoogleAssistant-Client"]
 	path = REST-GoogleAssistant-Client
 	url = git@github.com:thomasnorris/REST-GoogleAssistant-Client.git
+[submodule "Node-Logger"]
+	path = Node-Logger
+	url = git@github.com:thomasnorris/Node-Logger.git
