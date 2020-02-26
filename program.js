@@ -1,6 +1,9 @@
-(function() {
-    var _ping = require('ping');
+(async function() {
     var _path = require('path');
+    var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
+    await _logger.Init();
+
+    var _ping = require('ping');
     var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
 
     const CAM_1 = 'Living Room Cam';
@@ -24,11 +27,13 @@
         while (true) {
             // check for a device match
             var match = await pingAll();
+            var status = init ? 'Init' : _away ? 'Away' : 'Home'
 
-            console.log('Status:', init ? 'Init' : _away ? 'Away' : 'Home');
+            console.log('Status:', status);
 
             // someone just came home
             if (match && _away) {
+                _logger.Info.Async('Status change', status);
                 await _assistant.Send([
                     DISABLE_MD + ' on ' + CAM_1,
                     DISABLE_MD + ' on ' + CAM_2
@@ -36,8 +41,7 @@
                     // only change status on success
                     _away = false;
                 }).catch((err) => {
-                    // TODO: better error handing
-                    console.log('Error:', err.message, '. Command(s) not sent.');
+                    _logger.Error.Async('Command(s) not sent', err);
                 });
             }
 
@@ -46,6 +50,7 @@
                 if (init)
                     init = false;
 
+                _logger.Info.Async('Status change', status);
                 await _assistant.Send([
                     ENABLE_MD + ' on ' + CAM_1,
                     ENABLE_MD + ' on ' + CAM_2
@@ -53,8 +58,7 @@
                     // only change status on success
                     _away = true;
                 }).catch((err) => {
-                    // TODO: better error handing
-                    console.log('Error:', err.message, '. Command(s) not sent.');
+                    _logger.Error.Async('Command(s) not sent', err);
                 });
             }
 
