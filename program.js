@@ -33,7 +33,7 @@
 
             // someone just came home
             if (match && _away) {
-                _logger.Info.Async('Status change', status);
+                _logger.Info.Async('Status change', 'Someone came home');
                 await _assistant.Send([
                     DISABLE_MD + ' on ' + CAM_1,
                     DISABLE_MD + ' on ' + CAM_2
@@ -50,7 +50,7 @@
                 if (init)
                     init = false;
 
-                _logger.Info.Async('Status change', status);
+                    _logger.Info.Async('Status change', 'Everyone just left');
                 await _assistant.Send([
                     ENABLE_MD + ' on ' + CAM_1,
                     ENABLE_MD + ' on ' + CAM_2
