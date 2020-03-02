@@ -1,6 +1,9 @@
-(function() {
-    var _ping = require('ping');
+(async function() {
     var _path = require('path');
+    var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
+    await _logger.Init();
+
+    var _ping = require('ping');
     var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
 
     const CAM_1 = 'Living Room Cam';
@@ -18,27 +21,31 @@
     }
 
     var _away;
-
     // main
     (async function(init) {
         while (true) {
             // check for a device match
             var match = await pingAll();
+            var status = init ? 'Init' : _away ? 'Away' : 'Home'
 
-            console.log('Status:', init ? 'Init' : _away ? 'Away' : 'Home');
+            console.log('Status:', status);
 
             // someone just came home
             if (match && _away) {
-                await _assistant.Send([
-                    DISABLE_MD + ' on ' + CAM_1,
-                    DISABLE_MD + ' on ' + CAM_2
-                ]).then((dataArr) => {
-                    // only change status on success
-                    _away = false;
-                }).catch((err) => {
-                    // TODO: better error handing
-                    console.log('Error:', err.message, '. Command(s) not sent.');
-                });
+                _logger.Info.Async('Status change', 'Someone came home');
+                await _assistant.Send(DISABLE_MD + ' on ' + CAM_1)
+                    .then((response) => {
+                    })
+                    .catch((err) => {
+                        _logger.Error.Async('Command(s) not sent', err);
+                    });
+                await _assistant.Send(DISABLE_MD + ' on ' + CAM_2)
+                    .then((response) => {
+                    })
+                    .catch((err) => {
+                        _logger.Error.Async('Command(s) not sent', err);
+                    });
+                _away = false;
             }
 
             // everyone is away or init
@@ -46,16 +53,20 @@
                 if (init)
                     init = false;
 
-                await _assistant.Send([
-                    ENABLE_MD + ' on ' + CAM_1,
-                    ENABLE_MD + ' on ' + CAM_2
-                ]).then((dataArr) => {
-                    // only change status on success
-                    _away = true;
-                }).catch((err) => {
-                    // TODO: better error handing
-                    console.log('Error:', err.message, '. Command(s) not sent.');
-                });
+                _logger.Info.Async('Status change', 'Everyone just left');
+                await _assistant.Send(ENABLE_MD + ' on ' + CAM_1)
+                    .then((response) => {
+                    })
+                    .catch((err) => {
+                        _logger.Error.Async('Command(s) not sent', err);
+                    });
+                await _assistant.Send(ENABLE_MD + ' on ' + CAM_2)
+                    .then((response) => {
+                    })
+                    .catch((err) => {
+                        _logger.Error.Async('Command(s) not sent', err);
+                    });
+                _away = true;
             }
 
             // only have to wait if someone is home because scanning all devices when
