@@ -21,7 +21,6 @@
     }
 
     var _away;
-
     // main
     (async function(init) {
         while (true) {
@@ -34,15 +33,19 @@
             // someone just came home
             if (match && _away) {
                 _logger.Info.Async('Status change', 'Someone came home');
-                await _assistant.Send([
-                    DISABLE_MD + ' on ' + CAM_1,
-                    DISABLE_MD + ' on ' + CAM_2
-                ]).then((dataArr) => {
-                    // only change status on success
-                    _away = false;
-                }).catch((err) => {
-                    _logger.Error.Async('Command(s) not sent', err);
-                });
+                await _assistant.Send(DISABLE_MD + ' on ' + CAM_1)
+                    .then((response) => {
+                    })
+                    .catch((err) => {
+                        _logger.Error.Async('Command(s) not sent', err);
+                    });
+                await _assistant.Send(DISABLE_MD + ' on ' + CAM_2)
+                    .then((response) => {
+                    })
+                    .catch((err) => {
+                        _logger.Error.Async('Command(s) not sent', err);
+                    });
+                _away = false;
             }
 
             // everyone is away or init
@@ -50,16 +53,20 @@
                 if (init)
                     init = false;
 
-                    _logger.Info.Async('Status change', 'Everyone just left');
-                await _assistant.Send([
-                    ENABLE_MD + ' on ' + CAM_1,
-                    ENABLE_MD + ' on ' + CAM_2
-                ]).then((dataArr) => {
-                    // only change status on success
-                    _away = true;
-                }).catch((err) => {
-                    _logger.Error.Async('Command(s) not sent', err);
-                });
+                _logger.Info.Async('Status change', 'Everyone just left');
+                await _assistant.Send(ENABLE_MD + ' on ' + CAM_1)
+                    .then((response) => {
+                    })
+                    .catch((err) => {
+                        _logger.Error.Async('Command(s) not sent', err);
+                    });
+                await _assistant.Send(ENABLE_MD + ' on ' + CAM_2)
+                    .then((response) => {
+                    })
+                    .catch((err) => {
+                        _logger.Error.Async('Command(s) not sent', err);
+                    });
+                _away = true;
             }
 
             // only have to wait if someone is home because scanning all devices when
