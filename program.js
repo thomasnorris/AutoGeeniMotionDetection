@@ -1,8 +1,11 @@
+var _path = require('path');
+var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
 (async function() {
-    var _path = require('path');
-    var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
     await _logger.Init();
+    main();
+})();
 
+function main() {
     var _ping = require('ping');
     var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
 
@@ -114,4 +117,4 @@
             });
         })
     }
-})();
+};
