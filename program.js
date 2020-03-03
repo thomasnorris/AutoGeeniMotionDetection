@@ -1,6 +1,6 @@
+
 var _path = require('path');
 var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
-_logger.Init();
 
 var _ping = require('ping');
 var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
@@ -31,7 +31,7 @@ var _away;
 
         // someone just came home
         if (match && _away) {
-            _logger.Info.Async('Status change', 'Someone came home');
+            _logger.Info.Async('Status change', 'Home');
             await _assistant.Send(DISABLE_MD + ' on ' + CAM_1);
             await _assistant.Send(DISABLE_MD + ' on ' + CAM_2);
             _away = false;
@@ -42,7 +42,7 @@ var _away;
             if (init)
                 init = false;
 
-            _logger.Info.Async('Status change', 'Everyone just left');
+            _logger.Info.Async('Status change', 'Away');
             await _assistant.Send(ENABLE_MD + ' on ' + CAM_1);
             await _assistant.Send(ENABLE_MD + ' on ' + CAM_2);
             _away = true;
