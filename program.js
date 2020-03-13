@@ -1,6 +1,6 @@
 
 var _path = require('path');
-var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
+//var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
 
 var _ping = require('ping');
 var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
@@ -13,45 +13,67 @@ const DISABLE_MD = 'Disable motion detection';
 const SCAN_WAIT_MS = 2000;
 const PING_TIMEOUT_S = 2;
 
+// cycles to wait before sending commands
+// prevents commands from being fired if someone disconnects temporarily
+const DELAY_CYCLES = 5;
+
 // IPs must be static, set at router level
 const IPS = {
     TOM: '192.168.0.25',
-    NATH: '192.168.0.26'
+    NATH: '192.168.0.26',
+    LOCAL: 'localhost'
 }
 
 var _away;
+var _wait_cycle_count = 0;
+
 // main
-(async function(init) {
+(async (init) => {
     while (true) {
         // check for a device match
         var match = await pingAll();
         var status = init ? 'Init' : _away ? 'Away' : 'Home'
 
+        if ((match && !_away) || !match && _away)
+            _wait_cycle_count = 0;
+
         console.log('Status:', status);
 
         // someone just came home
         if (match && _away) {
-            _logger.Info.Async('Status change', 'Home');
-            await _assistant.Send(DISABLE_MD + ' on ' + CAM_1);
-            await _assistant.Send(DISABLE_MD + ' on ' + CAM_2);
-            _away = false;
+            if (_wait_cycle_count === DELAY_CYCLES) {
+                console.log('Command would be sent');
+                // _logger.Info.Async('Status change', 'Home');
+                // await _assistant.Send(DISABLE_MD + ' on ' + CAM_1);
+                // await _assistant.Send(DISABLE_MD + ' on ' + CAM_2);
+                _away = false;
+                _wait_cycle_count = 0;
+            }
+            ++_wait_cycle_count;
+            console.log('Waiting', _wait_cycle_count);
         }
 
         // everyone is away or init
         else if (init || (!match && !_away)) {
-            if (init)
-                init = false;
+            if (_wait_cycle_count === DELAY_CYCLES || init) {
+                if (init)
+                    init = false;
 
-            _logger.Info.Async('Status change', 'Away');
-            await _assistant.Send(ENABLE_MD + ' on ' + CAM_1);
-            await _assistant.Send(ENABLE_MD + ' on ' + CAM_2);
-            _away = true;
+                console.log('Command would be sent');
+                // _logger.Info.Async('Status change', 'Away');
+                // await _assistant.Send(ENABLE_MD + ' on ' + CAM_1);
+                // await _assistant.Send(ENABLE_MD + ' on ' + CAM_2);
+                _away = true;
+                _wait_cycle_count = 0;
+            }
+            ++_wait_cycle_count;
+            console.log('Waiting', _wait_cycle_count);
         }
 
         // only have to wait if someone is home because scanning all devices when
         // no one is home introduces a delay
-        if (!_away)
-            await wait(SCAN_WAIT_MS);
+        //if (!_away)
+        await wait(SCAN_WAIT_MS);
     }
 })(true);
 
