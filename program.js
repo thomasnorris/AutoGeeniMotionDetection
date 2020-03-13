@@ -3,7 +3,7 @@ var _path = require('path');
 //var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
 
 var _ping = require('ping');
-var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
+//var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
 
 const CAM_1 = 'Living Room Cam';
 const CAM_2 = 'Doggo Cam';
@@ -20,8 +20,7 @@ const DELAY_CYCLES = 5;
 // IPs must be static, set at router level
 const IPS = {
     TOM: '192.168.0.25',
-    NATH: '192.168.0.26',
-    LOCAL: 'localhost'
+    NATH: '192.168.0.26'
 }
 
 var _away;
@@ -32,25 +31,19 @@ var _wait_cycle_count = 0;
     while (true) {
         // check for a device match
         var match = await pingAll();
-        var status = init ? 'Init' : _away ? 'Away' : 'Home'
 
+        // reset the cycle count and prevent command from being sent
         if ((match && !_away) || !match && _away)
             _wait_cycle_count = 0;
 
-        console.log('Status:', status);
-
         // someone just came home
         if (match && _away) {
-            if (_wait_cycle_count === DELAY_CYCLES) {
-                console.log('Command would be sent');
-                // _logger.Info.Async('Status change', 'Home');
-                // await _assistant.Send(DISABLE_MD + ' on ' + CAM_1);
-                // await _assistant.Send(DISABLE_MD + ' on ' + CAM_2);
-                _away = false;
-                _wait_cycle_count = 0;
-            }
-            ++_wait_cycle_count;
-            console.log('Waiting', _wait_cycle_count);
+            console.log('Disable command would be sent');
+            // _logger.Info.Async('Status change', 'Home');
+            // await _assistant.Send(DISABLE_MD + ' on ' + CAM_1);
+            // await _assistant.Send(DISABLE_MD + ' on ' + CAM_2);
+            _away = false;
+            _wait_cycle_count = 0;
         }
 
         // everyone is away or init
@@ -59,15 +52,16 @@ var _wait_cycle_count = 0;
                 if (init)
                     init = false;
 
-                console.log('Command would be sent');
+                console.log('Enable command would be sent');
                 // _logger.Info.Async('Status change', 'Away');
                 // await _assistant.Send(ENABLE_MD + ' on ' + CAM_1);
                 // await _assistant.Send(ENABLE_MD + ' on ' + CAM_2);
                 _away = true;
                 _wait_cycle_count = 0;
+            } else {
+                ++_wait_cycle_count;
+                console.log('Waiting', _wait_cycle_count, 'out of', DELAY_CYCLES);
             }
-            ++_wait_cycle_count;
-            console.log('Waiting', _wait_cycle_count);
         }
 
         // only have to wait if someone is home because scanning all devices when
