@@ -1,9 +1,8 @@
 
 var _path = require('path');
-var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
-
 var _ping = require('ping');
 var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
+var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
 
 const CAM_1 = 'Living Room Cam';
 const CAM_2 = 'Doggo Cam';
