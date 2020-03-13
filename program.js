@@ -1,9 +1,9 @@
 
 var _path = require('path');
-//var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
+var _logger = require(_path.resolve(__dirname, 'Node-Logger', 'app.js'));
 
 var _ping = require('ping');
-//var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
+var _assistant = require(_path.resolve(__dirname, 'REST-GoogleAssistant-Client', 'client.js'));
 
 const CAM_1 = 'Living Room Cam';
 const CAM_2 = 'Doggo Cam';
@@ -38,10 +38,9 @@ var _wait_cycle_count = 0;
 
         // someone just came home
         if (match && _away) {
-            console.log('Disable command would be sent');
-            // _logger.Info.Async('Status change', 'Home');
-            // await _assistant.Send(DISABLE_MD + ' on ' + CAM_1);
-            // await _assistant.Send(DISABLE_MD + ' on ' + CAM_2);
+            _logger.Debug.Async('Status change', 'Home');
+            await _assistant.Send(DISABLE_MD + ' on ' + CAM_1);
+            await _assistant.Send(DISABLE_MD + ' on ' + CAM_2);
             _away = false;
             _wait_cycle_count = 0;
         }
@@ -52,22 +51,21 @@ var _wait_cycle_count = 0;
                 if (init)
                     init = false;
 
-                console.log('Enable command would be sent');
-                // _logger.Info.Async('Status change', 'Away');
-                // await _assistant.Send(ENABLE_MD + ' on ' + CAM_1);
-                // await _assistant.Send(ENABLE_MD + ' on ' + CAM_2);
+                _logger.Debug.Async('Status change', 'Away');
+                await _assistant.Send(ENABLE_MD + ' on ' + CAM_1);
+                await _assistant.Send(ENABLE_MD + ' on ' + CAM_2);
                 _away = true;
                 _wait_cycle_count = 0;
             } else {
                 ++_wait_cycle_count;
-                console.log('Waiting', _wait_cycle_count, 'out of', DELAY_CYCLES);
+                _logger.Debug.Async('Waiting', _wait_cycle_count + ' out of ' + DELAY_CYCLES);
             }
         }
 
         // only have to wait if someone is home because scanning all devices when
         // no one is home introduces a delay
-        //if (!_away)
-        await wait(SCAN_WAIT_MS);
+        if (!_away)
+            await wait(SCAN_WAIT_MS);
     }
 })(true);
 
