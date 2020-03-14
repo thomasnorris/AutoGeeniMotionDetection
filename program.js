@@ -37,7 +37,7 @@ var _wait_cycle_count = 0;
 
         // someone just came home
         if (match && _away) {
-            _logger.Debug.Async('Status change', 'Home');
+            _logger.Info.Async('Status change', 'Home');
             await _assistant.Send(DISABLE_MD + ' on ' + CAM_1);
             await _assistant.Send(DISABLE_MD + ' on ' + CAM_2);
             _away = false;
@@ -50,15 +50,13 @@ var _wait_cycle_count = 0;
                 if (init)
                     init = false;
 
-                _logger.Debug.Async('Status change', 'Away');
+                _logger.Info.Async('Status change', 'Away');
                 await _assistant.Send(ENABLE_MD + ' on ' + CAM_1);
                 await _assistant.Send(ENABLE_MD + ' on ' + CAM_2);
                 _away = true;
                 _wait_cycle_count = 0;
-            } else {
+            } else
                 ++_wait_cycle_count;
-                _logger.Debug.Async('Waiting', _wait_cycle_count + ' out of ' + DELAY_CYCLES);
-            }
         }
 
         // only have to wait if someone is home because scanning all devices when
