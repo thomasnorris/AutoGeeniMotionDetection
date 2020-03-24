@@ -21,4 +21,4 @@
     - Run `npm install` to install packages.
     - Run `node program.js` to start.
 - Optionally, add the following line to `/etc/rc.local` for auto startup:
-    - `sudo node "/PATH/TO/REPO/program.js"`.
+    - `sudo node "/PATH/TO/REPO/program.js" &`.
